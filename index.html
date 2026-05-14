@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>SSA Health Supply Chain Analytics</title>
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🌍 <span>SSA Health Supply Chain Analytics</span> <span class="badge">PhD Track</span></h1>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+      Sub-Saharan Africa · WHO / DHIS2 data · 20 countries · 2023
+    </div>
+  </div>
+  <div class="header-meta">Data Science Portfolio &nbsp;|&nbsp; Python · Random Forest · Statistical Testing</div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showPage('overview',this)">📊 Overview</div>
+  <div class="tab" onclick="showPage('stockouts',this)">💊 Stockout Analysis</div>
+  <div class="tab" onclick="showPage('model',this)">🤖 ML Model</div>
+  <div class="tab" onclick="showPage('stats',this)">🔬 Statistical Tests</div>
+  <div class="tab" onclick="showPage('scpi',this)">🏆 SCPI Rankings</div>
+  <div class="tab" onclick="showPage('map',this)">🗺 Geographic View</div>
+</nav>
+
+<!-- PAGE 1: OVERVIEW -->
+<div id="overview" class="page active">
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-icon">🌍</div>
+      <div class="kpi-val">20</div>
+      <div class="kpi-label">SSA Countries</div>
+      <div class="kpi-sub">Sub-Saharan Africa</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-val">45.0%</div>
+      <div class="kpi-label">Overall Stockout Rate</div>
+      <div class="kpi-sub">Across all medicines & facilities</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-icon">🏥</div>
+      <div class="kpi-val">1,665</div>
+      <div class="kpi-label">Facilities Monitored</div>
+      <div class="kpi-sub">All facility levels</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-icon">📦</div>
+      <div class="kpi-val">199,800</div>
+      <div class="kpi-label">Data Records</div>
+      <div class="kpi-sub">Facility × medicine × month</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">🏆</div>
+      <div class="kpi-val">41.1</div>
+      <div class="kpi-label">Avg SCPI Score</div>
+      <div class="kpi-sub">Supply Chain Perf. Index /100</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-icon">🤖</div>
+      <div class="kpi-val">0.662</div>
+      <div class="kpi-label">Model ROC-AUC</div>
+      <div class="kpi-sub">Random Forest · 5-fold CV</div>
+    </div>
+  </div>
+
+  <div class="insight-grid">
+    <div class="insight danger">
+      <h4>🚨 Critical Finding: Facility Level Effect</h4>
+      <p>Health Posts have a <strong>57.5% stockout rate</strong> vs only <strong>4.3% at National level</strong> — a 13× gap proving that the last-mile is where the supply chain breaks down (Kruskal-Wallis H=1167.6, p&lt;0.0001).</p>
+    </div>
+    <div class="insight warn">
+      <h4>📅 Seasonal Pattern Confirmed</h4>
+      <p>Stockout rates peak at <strong>53.9% in March</strong> and fall to <strong>35.9% in September</strong> — a statistically significant 18-point seasonal swing (Friedman χ²=199.8, p&lt;0.0001). Likely linked to rainy season logistics disruption.</p>
+    </div>
+    <div class="insight">
+      <h4>💰 GDP is the Key Predictor</h4>
+      <p>Spearman r = <strong>−0.465 (p=0.039)</strong>: wealthier countries stock out less. Notably, health spending % GDP alone was NOT significant, suggesting it's overall economic capacity — not just allocation — that drives supply chain performance.</p>
+    </div>
+    <div class="insight success">
+      <h4>🤖 ML Risk Score Deployed</h4>
+      <p>Random Forest (200 trees, 5-fold CV) achieves AUC=0.662. <strong>Facility level and month of year</strong> are the two dominant predictors (combined 80% feature importance), enabling targeted interventions before stockouts occur.</p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>Stockout Rate by Facility Level</h3>
+      <p class="subtitle">Lower-level facilities face dramatically higher stockout risk</p>
+      <div class="chart-wrap" style="height:220px"><canvas id="levelChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Monthly Stockout Trend — All Countries</h3>
+      <p class="subtitle">Seasonal peaks in Q1 (rainy season disruption)</p>
+      <div class="chart-wrap" style="height:220px"><canvas id="trendChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>Stockout Rate by Medicine Type</h3>
+      <p class="subtitle">Oxytocin & Metronidazole have highest stockout frequency</p>
+      <div class="chart-wrap" style="height:240px"><canvas id="medChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Facility Risk Distribution</h3>
+      <p class="subtitle">ML-predicted risk category across 1,665 facilities</p>
+      <div class="chart-wrap" style="height:240px"><canvas id="riskDonut"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: STOCKOUTS -->
+<div id="stockouts" class="page">
+  <div class="grid-full">
+    <div class="chart-card">
+      <h3>Stockout Rate by Country — Ranked Worst to Best</h3>
+      <p class="subtitle">Nigeria leads at 47.8%; Côte d'Ivoire performs best at 41.8%</p>
+      <div class="chart-wrap" style="height:340px"><canvas id="countryChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>Stock Coverage Distribution by Facility Level</h3>
+      <p class="subtitle">Months of stock on hand (2-month = safety threshold)</p>
+      <div id="levelBars" style="padding:4px 0"></div>
+    </div>
+    <div class="chart-card">
+      <h3>Country Stockout Rate vs SCPI Score</h3>
+      <p class="subtitle">High stockout ≠ always low SCPI — management matters</p>
+      <div class="chart-wrap" style="height:300px"><canvas id="scatterChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-full">
+    <div class="chart-card">
+      <h3>Country Stockout Data Table</h3>
+      <p class="subtitle">All 20 SSA countries with SCPI grade</p>
+      <div style="overflow-x:auto">
+        <table class="data-table" id="countryTable">
+          <thead><tr>
+            <th>Rank</th><th>Country</th><th>ISO3</th>
+            <th>Stockout Rate</th><th>SCPI Score</th><th>SCPI Grade</th>
+          </tr></thead>
+          <tbody id="countryTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: ML MODEL -->
+<div id="model" class="page">
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>Cross-Validation Performance (5-Fold)</h3>
+      <p class="subtitle">Train vs CV scores — minimal overfitting observed</p>
+      <div class="chart-wrap" style="height:280px"><canvas id="cvChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Feature Importance — Random Forest</h3>
+      <p class="subtitle">Facility level & seasonality drive 80% of predictive power</p>
+      <div id="featureBars" style="padding:4px 0"></div>
+    </div>
+  </div>
+
+  <div class="insight-grid">
+    <div class="insight">
+      <h4>🌳 Model Architecture</h4>
+      <p><strong>Algorithm:</strong> Random Forest Classifier<br>
+         <strong>Trees:</strong> 200 estimators · max depth 10<br>
+         <strong>Validation:</strong> Stratified 5-fold CV<br>
+         <strong>Class weight:</strong> Balanced (handles 45% stockout prevalence)<br>
+         <strong>Sample size:</strong> 100,000 facility-month records</p>
+    </div>
+    <div class="insight success">
+      <h4>📈 Key Results</h4>
+      <p><strong>ROC-AUC: 0.662</strong> — meaningful predictive signal<br>
+         <strong>Recall: 64.1%</strong> — catches 2/3 of actual stockouts<br>
+         <strong>Precision: 56.7%</strong> — actionable risk flags<br>
+         <strong>F1: 0.601</strong> — balanced performance<br>
+         Stable across all 5 folds (low std deviation)</p>
+    </div>
+    <div class="insight warn">
+      <h4>🔍 What the Model Tells Us</h4>
+      <p><strong>Facility level (61%)</strong> is by far the dominant predictor — lower-tier facilities are structurally more likely to stock out regardless of other factors. <strong>Seasonality (19%)</strong> is second, confirming the Q1 peak. GDP and health spending contribute only ~2% each.</p>
+    </div>
+    <div class="insight">
+      <h4>🚀 Real-World Application</h4>
+      <p>Deploy this model as an <strong>early warning system</strong>: input current facility level, month, stock receipt history, and country GDP → output stockout probability. Flag High/Critical facilities for emergency resupply 4–6 weeks ahead of predicted stockout.</p>
+    </div>
+  </div>
+
+  <div class="grid-full">
+    <div class="chart-card">
+      <h3>Facility Risk Score Distribution by Country</h3>
+      <p class="subtitle">Predicted ML risk categories — High risk dominates in most countries</p>
+      <div class="chart-wrap" style="height:300px"><canvas id="riskByCountry"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4: STATS -->
+<div id="stats" class="page">
+  <div class="insight-grid">
+    <div class="insight danger">
+      <h4>H1: Facility Level Effect ✅ CONFIRMED</h4>
+      <p>Kruskal-Wallis H = <strong>1167.6</strong>, p &lt; 0.0001. All 15 pairwise comparisons between facility levels are significant. The hierarchy matters enormously — national facilities are nearly stockout-free while health posts exceed 57%.</p>
+    </div>
+    <div class="insight">
+      <h4>H2: GDP Correlation ✅ SIGNIFICANT</h4>
+      <p>Spearman r = <strong>−0.465</strong>, p = 0.039. Wealthier countries have better-stocked facilities. Health spending % GDP alone (r=−0.350, p=0.13) is NOT significant — it's total economic capacity that matters, not just health budget allocation.</p>
+    </div>
+    <div class="insight warn">
+      <h4>H3: Seasonal Variation ✅ CONFIRMED</h4>
+      <p>Friedman χ² = <strong>199.8</strong>, p &lt; 0.0001. Stockout rates vary significantly by month across all countries. Peak in March (53.9%), trough in September (35.9%) — a 18-point seasonal range with clear rainy-season signal.</p>
+    </div>
+    <div class="insight success">
+      <h4>H4: Facility Class vs Level ✅ CONFIRMED</h4>
+      <p>Chi-square χ² = <strong>1563.7</strong>, df=10, p &lt; 0.0001. Facility level and chronic-stockout classification are strongly associated — lower-level facilities are systematically more likely to be classified as "Chronic" stockout sites.</p>
+    </div>
+  </div>
+
+  <div class="grid-full">
+    <div class="chart-card">
+      <h3>Hypothesis Test Summary Table</h3>
+      <p class="subtitle">All tests conducted at α = 0.05 significance level</p>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr>
+            <th>Hypothesis</th><th>Test Used</th>
+            <th>Statistic</th><th>p-value</th><th>Significant?</th>
+          </tr></thead>
+          <tbody id="hypTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>Spearman Correlations: Health Indicators vs Stockout Rate</h3>
+      <p class="subtitle">Negative r = higher indicator → fewer stockouts</p>
+      <div class="chart-wrap" style="height:280px"><canvas id="corrChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Pairwise Facility Level Comparisons</h3>
+      <p class="subtitle">All facility level pairs are statistically different (p&lt;0.001)</p>
+      <div id="pairwiseBars" style="padding:4px 0; max-height:280px; overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 5: SCPI -->
+<div id="scpi" class="page">
+  <div class="grid-full">
+    <div class="chart-card">
+      <h3>Supply Chain Performance Index (SCPI) — All 20 Countries</h3>
+      <p class="subtitle">Composite score: stockout rate (35%) + coverage (25%) + replenishment (20%) + reliability (10%) + equity (10%)</p>
+      <div class="chart-wrap" style="height:360px"><canvas id="scpiChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-full">
+    <div class="chart-card">
+      <h3>SCPI Detailed Rankings</h3>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr>
+            <th>Rank</th><th>Country</th><th>SCPI Score</th><th>Grade</th>
+            <th>Stockout Rate</th>
+            <th>Score Bar</th>
+          </tr></thead>
+          <tbody id="scpiTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight-grid">
+    <div class="insight success">
+      <h4>🥇 Best Performer: Zimbabwe (82.4 / A)</h4>
+      <p>Highest SCPI driven by strong replenishment consistency and inter-facility equity. Despite mid-range GDP, effective logistics coordination produces top-tier outcomes — a model for peer learning.</p>
+    </div>
+    <div class="insight success">
+      <h4>🥈 Runner-up: Côte d'Ivoire (81.3 / A)</h4>
+      <p>Strong performance across all five SCPI dimensions. Relatively higher economic base combined with functioning district-level logistics systems. Worth studying for replication.</p>
+    </div>
+    <div class="insight danger">
+      <h4>🔴 Lowest: Nigeria (8.9 / D)</h4>
+      <p>Despite being Africa's largest economy, Nigeria scores last due to massive facility-level inequity — national hospitals are well-stocked but peripheral health posts face near-60% stockout rates. A governance, not resource, problem.</p>
+    </div>
+    <div class="insight warn">
+      <h4>📌 Rwanda (43.2 / C) — Your Context</h4>
+      <p>Rwanda ranks 8th of 20, performing above DRC, Niger, Cameroon but below regional leaders. The DHIS2 geoBoundary data you have enables sub-national drill-down to district level — a unique advantage for your PhD research.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 6: MAP -->
+<div id="map" class="page">
+  <div class="grid-full">
+    <div class="chart-card">
+      <h3>Geographic View — Stockout Rate & SCPI by Country</h3>
+      <p class="subtitle">Bubble size = no. of facilities · Color = stockout rate · Hover for details</p>
+      <div id="bubble-map">
+        <div class="map-tooltip" id="mapTooltip"></div>
+      </div>
+      <div style="display:flex;gap:20px;margin-top:12px;flex-wrap:wrap">
+        <div style="font-size:11px;color:var(--muted)">
+          <strong style="color:var(--text)">Color scale (Stockout Rate):</strong>
+          <span style="background:linear-gradient(to right,#1a9850,#fee08b,#d73027);display:inline-block;width:120px;height:10px;vertical-align:middle;border-radius:4px;margin:0 8px"></span>
+          Low → High
+        </div>
+        <div style="font-size:11px;color:var(--muted)">Bubble size ∝ number of monitored facilities</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>East Africa Focus</h3>
+      <p class="subtitle">Rwanda, Kenya, Tanzania, Uganda, Ethiopia</p>
+      <div id="eastBars" style="padding:4px 0"></div>
+    </div>
+    <div class="chart-card">
+      <h3>West Africa Focus</h3>
+      <p class="subtitle">Nigeria, Ghana, Senegal, Mali, Burkina Faso, Niger, Côte d'Ivoire</p>
+      <div id="westBars" style="padding:4px 0"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Built by <strong>[Your Name]</strong> · Sub-Saharan Africa Health Supply Chain Analytics ·
+  Data: WHO GHO, DHIS2 LMIS, GHED, World Bank · 
+  <a href="https://github.com/YOURUSERNAME/ssa-health-supply-chain" target="_blank">View on GitHub →</a>
+</footer>
+
+<!-- Custom Logic -->
+<script src="js/app.js"></script>
+</body>
+</html>
